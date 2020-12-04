@@ -1,41 +1,47 @@
-let fs = require('fs');
+const fs = require('fs');
+
 try {
-	let structure = JSON.parse(fs.readFileSync('TestcaseStructure.json').toString());
-	let values = JSON.parse(fs.readFileSync('Values.json').toString());
-	structure.params.forEach(el => fillParams(el, values))
-	fs.writeFile("result.json", JSON.stringify(structure), (err) => {
+	fs.writeFile("StructureWithValues.json", JSON.stringify(createStructure()), (err) => {
 		if (err) throw err;
 	})
-}
-catch (err) {
-	let errorMessage = {"error": {"message": "Входные файлы некорректны"}}
-	fs.writeFile("error.json", JSON.stringify(errorMessage), (err) => {
+} catch (err) {
+	const errorMessage = {
+		"error": {
+			"message": "Входные файлы некорректны"
+		}
+	};
+	fs.writeFile("Error.json", JSON.stringify(errorMessage), (err) => {
 		if (err) throw err;
 	})
-	console.log(err.name)
+	console.log(err.name);
 }
 
 function valueIdGiver(id, values) {
-	for (let i = 0; i < values.length; i++) {
-		if (values[i].id == id) return values[i].value
-	}
-	return '';
+	const elem = values.find(item => item.id === id);
+	return elem ? elem.value : '';
 }
 
 function valueGiverFromValues(id, values) {
-	for (let i = 0; i < values.length; i++) {
-		if (values[i].id == id) return values[i].title
-	}
-	return '';
+	const elem = values.find(item => item.id === id);
+	return elem ? elem.title : '';
 }
 
 function fillParams(element, values) {
-	console.log(values)
-	if (!element.values) element.value = valueIdGiver(element.id, values.values)
+	if (!element.values) element.value = valueIdGiver(element.id, values.values);
 	else {
 		element.values.forEach(el => {
-			if (el.params) el.params.forEach(el => fillParams(el, values))
+			if (el.params) el.params.forEach(el => fillParams(el, values));
 		});
-		element.value = valueGiverFromValues(valueIdGiver(element.id, values.values), element.values)
+		element.value = valueGiverFromValues(valueIdGiver(element.id, values.values), element.values);
 	}
 }
+
+function createStructure() {
+	let structure = JSON.parse(fs.readFileSync('TestcaseStructure.json').toString());
+	const values = JSON.parse(fs.readFileSync('Values.json').toString());
+
+	structure.params.forEach(el => fillParams(el, values));
+	return structure;
+}
+
+module.exports = {valueIdGiver, valueGiverFromValues, createStructure}
